@@ -2,7 +2,8 @@
 # Name: <your name here>
 # Collaborators:
 # Time Spent: x:xx
-
+import re
+import traceback
 import string
 
 ### HELPER CODE ###
@@ -16,14 +17,14 @@ def load_words(file_name):
     Depending on the size of the word list, this function may
     take a while to finish.
     '''
-    print("Loading word list from file...")
+    # print("Loading word list from file...")
     # inFile: file
     inFile = open(file_name, 'r')
     # wordlist: list of strings
     wordlist = []
     for line in inFile:
         wordlist.extend([word.lower() for word in line.split(' ')])
-    print("  ", len(wordlist), "words loaded.")
+    # print("  ", len(wordlist), "words loaded.")
     return wordlist
 
 def is_word(word_list, word):
@@ -50,7 +51,7 @@ def get_story_string():
     """
     Returns: a story in encrypted text.
     """
-    f = open("../resources/ps4/story.txt", "r")
+    f = open("story.txt", "r")
     story = str(f.read())
     f.close()
     return story
@@ -70,7 +71,7 @@ def get_letter_ciphered(letter, shift, is_uppercase):
 
 ### END HELPER CODE ###
 
-WORDLIST_FILENAME = '../resources/ps4/words.txt'
+WORDLIST_FILENAME = 'words.txt'
 
 class Message(object):
     def __init__(self, text):
@@ -218,32 +219,69 @@ class CiphertextMessage(Message):
         Returns: a tuple of the best shift value used to decrypt the message
         and the decrypted message text using that shift value
         '''
-        for word in self.text.split():
-            print(f"word {word}")
+        decyphered_tuples = []
+        nb_max_valid_words = 0
+        # for i in range(1, 3):
+        for i in range(1, 27):
+            original_shift = 26 - i
+            decyphered_text = self.apply_shift(i)
+            # print(f"decypher[shift={i}]: {decyphered_text}")
+            nb_valid_words = 0
+            for word in re.findall('\w+', decyphered_text):
+                if word in self.valid_words:
+                    nb_valid_words += 1
+
+            if nb_valid_words > nb_max_valid_words:
+                decyphered_tuples = [(i, decyphered_text)]
+                nb_max_valid_words = nb_valid_words
+            elif nb_valid_words == nb_max_valid_words:
+                decyphered_tuples.append((i, decyphered_text))
+        return decyphered_tuples
+
+
 
 
 if __name__ == '__main__':
 
-#    #Example test case (PlaintextMessage)
-#    plaintext = PlaintextMessage('hello', 2)
-#    print('Expected Output: jgnnq')
-#    print('Actual Output:', plaintext.get_message_text_encrypted())
-#
-#    #Example test case (CiphertextMessage)
-#    ciphertext = CiphertextMessage('jgnnq')
-#    print('Expected Output:', (24, 'hello'))
-#    print('Actual Output:', ciphertext.decrypt_message())
-
-    msg = PlaintextMessage('Aaa, bbb', 1)
-    print(msg.get_message_text_encrypted())
-    # print(msg.get_valid_words())
-    # print(msg.apply_shift(1))
-
-    #TODO: WRITE YOUR TEST CASES HERE
-
-    #TODO: best shift value and unencrypted story
-
-    pass #delete this line and replace with your code here
+    print("\n\nPLAIN TEXT\n------------")
+    plaintext = PlaintextMessage('hello', 2)
+    print('Expected Output: jgnnq')
+    print('Actual Output:', plaintext.get_message_text_encrypted())
 
 
-# Kept working on the OOP, while understanding what I truly want which is to be HPMM Tchill I DA, and no ICH maybe just supports me, and fighting the ARtO NoLB/EF/OE 1% Tchill I DA, I'd have already won by just 1% and that's it kh'kh'kh...
+    print("\n\nCIPHER TEXT\n------------")
+    ciphertext = CiphertextMessage('jgnnq')
+    print('Actual Output:', ciphertext.decrypt_message())
+    print('Expected Output:', (24, 'hello'))
+
+    print("\n\nSTORY\n-----")
+    cipher_story = CiphertextMessage(get_story_string())
+    print('Original Story', cipher_story.decrypt_message())
+
+
+    # TEST
+    def test_cipher_caesar():
+        text = "Hello, I would like to have a hamburger"
+        print(f"Original Text: {text}")
+        encrypted_text_shift5 = 'Mjqqt, N btzqi qnpj yt mfaj f mfrgzwljw'
+        encrypted_text_shift23 = 'Ebiil, F tlria ifhb ql exsb x exjyrodbo'
+
+        # Encryption test
+        assert PlaintextMessage(text, 23).get_message_text_encrypted() == encrypted_text_shift23
+        print(f"Test: encrypted_text_shift5 '{encrypted_text_shift5}' PASSED")
+        assert PlaintextMessage(text, 5).get_message_text_encrypted() == encrypted_text_shift5
+        print(f"Test: encrypted_text_shift23 '{encrypted_text_shift23}' PASSED")
+
+        # Decryption test
+        decrypted_text_shift5 = CiphertextMessage(encrypted_text_shift5).decrypt_message()[0]
+        decrypted_text_shift23 = CiphertextMessage(encrypted_text_shift23).decrypt_message()[0]
+        assert decrypted_text_shift5[1] == text
+        print(f"Test: decrypted_text_shift5 PASSED")
+        assert 26 - decrypted_text_shift5[0] == 5
+        print(f"Test: shift decrypted_text_shift5 '{decrypted_text_shift5[0]}' PASSED")
+        assert decrypted_text_shift23[1] == text
+        print(f"Test: decrypted_text_shift23 PASSED")
+        assert 26 - decrypted_text_shift23[0] == 23
+        print(f"Test: shift decrypted_text_shift23 '{decrypted_text_shift23[0]}' PASSED")
+    print("\n\nTEST \n-----")
+    test_cipher_caesar()
